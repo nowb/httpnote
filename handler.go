@@ -6,11 +6,11 @@ import (
 	"github.com/rs/zerolog"
 )
 
-func NewHTTPNoteHandlerFunc(logger *zerolog.Logger) http.HandlerFunc {
+func NewHTTPNoteHandlerFunc(logger *zerolog.Logger, encodeBytes bool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		logger.
 			Debug().
-			Object("req", MapRequest(r)).
+			Object("req", MapRequest(r, encodeBytes)).
 			Send()
 	}
 }

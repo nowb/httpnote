@@ -263,7 +263,7 @@ func (fhi *FileHeaderInfo) MarshalZerologObject(e *zerolog.Event) {
 	}
 }
 
-func MapRequest(r *http.Request) *RequestInfo {
+func MapRequest(r *http.Request, encodeBytes bool) *RequestInfo {
 	if r == nil {
 		return nil
 	}
@@ -320,8 +320,11 @@ func MapRequest(r *http.Request) *RequestInfo {
 	// set Body and BodyBase64
 	bodyBytes, err := io.ReadAll(r.Body)
 	if err == nil && len(bodyBytes) > 0 {
-		ri.Body = bodyBytes
-		ri.BodyBase64 = base64.StdEncoding.EncodeToString(bodyBytes)
+		if !encodeBytes {
+			ri.Body = bodyBytes
+		} else {
+			ri.BodyBase64 = base64.StdEncoding.EncodeToString(bodyBytes)
+		}
 
 		r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 	}
@@ -342,13 +345,13 @@ func MapRequest(r *http.Request) *RequestInfo {
 
 	// set MultipartForm
 	if r.MultipartForm != nil {
-		ri.MultipartForm = MapForm(r.MultipartForm)
+		ri.MultipartForm = MapForm(r.MultipartForm, encodeBytes)
 	}
 
 	return ri
 }
 
-func MapFileHeader(fh *multipart.FileHeader) *FileHeaderInfo {
+func MapFileHeader(fh *multipart.FileHeader, encodeBytes bool) *FileHeaderInfo {
 	if fh == nil {
 		return nil
 	}
@@ -364,15 +367,18 @@ func MapFileHeader(fh *multipart.FileHeader) *FileHeaderInfo {
 	if err == nil {
 		fileBytes, err := io.ReadAll(file)
 		if err == nil {
-			fhi.File = fileBytes
-			fhi.FileBase64 = base64.StdEncoding.EncodeToString(fileBytes)
+			if !encodeBytes {
+				fhi.File = fileBytes
+			} else {
+				fhi.FileBase64 = base64.StdEncoding.EncodeToString(fileBytes)
+			}
 		}
 	}
 
 	return fhi
 }
 
-func MapForm(f *multipart.Form) *FormInfo {
+func MapForm(f *multipart.Form, encodeBytes bool) *FormInfo {
 	if f == nil {
 		return nil
 	}
@@ -391,7 +397,7 @@ func MapForm(f *multipart.Form) *FormInfo {
 
 			for _, fh := range v {
 				if fh != nil {
-					fhiSlice = append(fhiSlice, MapFileHeader(fh))
+					fhiSlice = append(fhiSlice, MapFileHeader(fh, encodeBytes))
 				}
 			}
 

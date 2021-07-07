@@ -30,7 +30,7 @@ func TestMapRequest(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		output := httpnote.MapRequest(test.r)
+		output := httpnote.MapRequest(test.r, true)
 
 		if !reflect.DeepEqual(test.expectedOutput, output) {
 			t.Errorf("expected: %v, got: %v", test.expectedOutput, output)

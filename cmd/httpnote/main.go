@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io"
 	"net/http"
 	"os"
 	"strconv"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/nowb/httpnote"
 	"github.com/rs/zerolog"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 func main() {
@@ -24,9 +26,20 @@ func main() {
 		}
 	}
 
+	logFilename := "./logs/httpnote-access.log"
+	if lf := os.Getenv("LOG_FILENAME"); lf != "" {
+		logFilename = lf
+	}
+
 	zerolog.TimeFieldFormat = time.RFC3339Nano
 
-	logger := zerolog.New(os.Stderr).With().Timestamp().Logger()
+	w := &lumberjack.Logger{
+		Filename: logFilename,
+		MaxSize:  20,
+		Compress: true,
+	}
+	mw := io.MultiWriter(os.Stderr, w)
+	logger := zerolog.New(mw).With().Timestamp().Logger()
 	handler := httpnote.NewHTTPNoteHandlerFunc(&logger, encodeBytes)
 
 	logger.Fatal().Err(http.ListenAndServe(":"+port, handler)).Send()
